@@ -73,6 +73,24 @@ Future versions may include
 * GitHub Actions
 * Jest
 
+## Running the Mobile App
+
+The mobile application is a self-contained Expo project located inside `apps/mobile/` with its own `node_modules` and local lockfile.
+
+To run the application:
+
+1. Navigate to the mobile directory:
+   ```bash
+   cd apps/mobile
+   ```
+2. Start the project:
+   ```bash
+   npm install      # Install dependencies locally
+   npm run android  # Run on Android emulator/device
+   npm run ios      # Run on iOS simulator/device
+   npm start        # Start the Metro bundler
+   ```
+
 ---
 
 # Architecture Principles
