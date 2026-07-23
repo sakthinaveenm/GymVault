@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { mmkvStorage } from './index';
+import { useAuthStore } from './auth.store';
+import { API_URL } from '@/constants/api';
 
 export interface Exercise {
   id: string;
@@ -47,22 +49,13 @@ export interface LoggedWorkout {
   exercises: WorkoutExercise[];
 }
 
-// Hardcoded Exercise Database
-export const EXERCISE_DATABASE: Exercise[] = [
+// Local Exercise Database fallback (when server is offline)
+export const OFFLINE_EXERCISES: Exercise[] = [
   { id: '1', name: 'Barbell Bench Press', category: 'Barbell', primaryMuscle: 'Chest', description: 'Lie on a flat bench, grip the barbell slightly wider than shoulder-width, lower it to your chest, and press up.' },
   { id: '2', name: 'Dumbbell Incline Press', category: 'Dumbbell', primaryMuscle: 'Chest', description: 'Sit on an incline bench, press dumbbells upwards from shoulder height.' },
   { id: '3', name: 'Barbell Squat', category: 'Barbell', primaryMuscle: 'Legs', description: 'Rest barbell on traps, bend knees and hips to squat down, keep chest up, and stand back up.' },
   { id: '4', name: 'Barbell Deadlift', category: 'Barbell', primaryMuscle: 'Back', description: 'Lift barbell from the ground to hip level, keeping your back straight and engaging glutes/hamstrings.' },
   { id: '5', name: 'Overhead Press', category: 'Barbell', primaryMuscle: 'Shoulders', description: 'Press barbell overhead from collarbone level while standing.' },
-  { id: '6', name: 'Pull Up', category: 'Bodyweight', primaryMuscle: 'Back', description: 'Hang from a bar and pull your chest to the bar using your back and biceps.' },
-  { id: '7', name: 'Dumbbell Bicep Curl', category: 'Dumbbell', primaryMuscle: 'Arms', description: 'Hold dumbbells by sides and curl them upwards while keeping elbows pinned.' },
-  { id: '8', name: 'Cable Tricep Pushdown', category: 'Machine', primaryMuscle: 'Arms', description: 'Push cable attachment downwards by extending elbows.' },
-  { id: '9', name: 'Dumbbell Lateral Raise', category: 'Dumbbell', primaryMuscle: 'Shoulders', description: 'Raise dumbbells outwards to the sides to shoulder height.' },
-  { id: '10', name: 'Lying Leg Curl', category: 'Machine', primaryMuscle: 'Legs', description: 'Lie face down and curl the leg roller towards glutes.' },
-  { id: '11', name: 'Leg Extension', category: 'Machine', primaryMuscle: 'Legs', description: 'Sit and extend knees to lift the roller pad.' },
-  { id: '12', name: 'Plank', category: 'Bodyweight', primaryMuscle: 'Core', description: 'Hold a push-up position resting on forearms, maintaining a straight line.' },
-  { id: '13', name: 'Cable Seated Row', category: 'Machine', primaryMuscle: 'Back', description: 'Sit at cable station and pull handle towards lower abdomen.' },
-  { id: '14', name: 'Push Up', category: 'Bodyweight', primaryMuscle: 'Chest', description: 'Classic push-up from the floor keeping body straight.' },
 ];
 
 interface WorkoutState {
@@ -71,9 +64,12 @@ interface WorkoutState {
   activeWorkout: ActiveWorkout | null;
   exercises: Exercise[];
   
+  // Sync
+  syncData: () => Promise<void>;
+
   // Routine actions
-  createRoutine: (title: string, exercises: WorkoutExercise[]) => void;
-  deleteRoutine: (id: string) => void;
+  createRoutine: (title: string, exercises: WorkoutExercise[]) => Promise<void>;
+  deleteRoutine: (id: string) => Promise<void>;
 
   // Active workout actions
   startWorkout: (routineId?: string) => void;
@@ -83,64 +79,108 @@ interface WorkoutState {
   addSetToActiveExercise: (exerciseId: string) => void;
   removeSetFromActiveExercise: (exerciseId: string, setId: string) => void;
   updateActiveSet: (exerciseId: string, setId: string, fields: Partial<WorkoutSet>) => void;
-  completeWorkout: () => void;
+  completeWorkout: () => Promise<void>;
   cancelActiveWorkout: () => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
     (set, get) => ({
-      routines: [
-        {
-          id: 'default-push',
-          title: 'Push Day',
-          exercises: [
-            {
-              exerciseId: '1',
-              name: 'Barbell Bench Press',
-              category: 'Barbell',
-              primaryMuscle: 'Chest',
-              sets: [
-                { id: 's1', weight: 60, reps: 10, isCompleted: false, type: 'normal' },
-                { id: 's2', weight: 60, reps: 10, isCompleted: false, type: 'normal' },
-                { id: 's3', weight: 65, reps: 8, isCompleted: false, type: 'normal' },
-              ]
-            },
-            {
-              exerciseId: '5',
-              name: 'Overhead Press',
-              category: 'Barbell',
-              primaryMuscle: 'Shoulders',
-              sets: [
-                { id: 's4', weight: 40, reps: 8, isCompleted: false, type: 'normal' },
-                { id: 's5', weight: 40, reps: 8, isCompleted: false, type: 'normal' },
-              ]
-            }
-          ]
-        }
-      ],
+      routines: [],
       history: [],
       activeWorkout: null,
-      exercises: EXERCISE_DATABASE,
+      exercises: OFFLINE_EXERCISES,
 
-      createRoutine: (title, exercises) => {
-        const newRoutine: Routine = {
+      syncData: async () => {
+        const token = useAuthStore.getState().token;
+        
+        // Always try to load seeded exercises first
+        try {
+          const exRes = await fetch(`${API_URL}/exercises`);
+          const exJson = await exRes.json();
+          if (exJson.success) {
+            set({ exercises: exJson.data });
+          }
+        } catch (e) {
+          console.warn('Offline: Failed to fetch online exercise database. Using local cache.');
+        }
+
+        if (!token) return;
+
+        try {
+          // Fetch Routines
+          const rRes = await fetch(`${API_URL}/routines`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const rJson = await rRes.json();
+          if (rJson.success) {
+            set({ routines: rJson.data });
+          }
+
+          // Fetch History
+          const hRes = await fetch(`${API_URL}/history`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const hJson = await hRes.json();
+          if (hJson.success) {
+            set({ history: hJson.data });
+          }
+        } catch (e) {
+          console.warn('Sync failed. Displaying offline cached workout logs.');
+        }
+      },
+
+      createRoutine: async (title, exercises) => {
+        const token = useAuthStore.getState().token;
+        const newRoutineLocal: Routine = {
           id: Math.random().toString(36).substring(7),
           title: title || 'New Routine',
           exercises,
         };
-        set((state) => ({ routines: [...state.routines, newRoutine] }));
+
+        // Optimistic UI update
+        set((state) => ({ routines: [...state.routines, newRoutineLocal] }));
+
+        if (!token) return;
+
+        try {
+          await fetch(`${API_URL}/routines`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ title, exercises }),
+          });
+          get().syncData();
+        } catch (e) {
+          console.warn('Offline: saved routine locally only.');
+        }
       },
 
-      deleteRoutine: (id) => {
+      deleteRoutine: async (id) => {
+        const token = useAuthStore.getState().token;
+        
+        // Optimistic UI update
         set((state) => ({
           routines: state.routines.filter((r) => r.id !== id),
         }));
+
+        if (!token) return;
+
+        try {
+          await fetch(`${API_URL}/routines/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } catch (e) {
+          console.warn('Offline: removed routine locally only.');
+        }
       },
 
       startWorkout: (routineId) => {
         const state = get();
-        if (state.activeWorkout) return; // Workout already active
+        if (state.activeWorkout) return;
         
         let initialExercises: WorkoutExercise[] = [];
         let title = 'Custom Workout';
@@ -149,7 +189,6 @@ export const useWorkoutStore = create<WorkoutState>()(
           const routine = state.routines.find((r) => r.id === routineId);
           if (routine) {
             title = routine.title;
-            // Deep copy exercises and sets
             initialExercises = routine.exercises.map((e) => ({
               ...e,
               sets: e.sets.map((s) => ({ ...s, isCompleted: false })),
@@ -182,7 +221,6 @@ export const useWorkoutStore = create<WorkoutState>()(
         const active = get().activeWorkout;
         if (!active) return;
 
-        // Check if exercise already exists
         const exists = active.exercises.some((e) => e.exerciseId === exercise.id);
         if (exists) return;
 
@@ -294,12 +332,12 @@ export const useWorkoutStore = create<WorkoutState>()(
         });
       },
 
-      completeWorkout: () => {
+      completeWorkout: async () => {
         const active = get().activeWorkout;
         if (!active) return;
 
-        // Save to history
-        const logged: LoggedWorkout = {
+        const token = useAuthStore.getState().token;
+        const loggedLocal: LoggedWorkout = {
           id: Math.random().toString(36).substring(7),
           title: active.title || 'Workout',
           date: Date.now(),
@@ -307,14 +345,36 @@ export const useWorkoutStore = create<WorkoutState>()(
           exercises: active.exercises.filter((e) => e.sets.some((s) => s.isCompleted)),
         };
 
-        // Only log if they completed at least one set
-        if (logged.exercises.length > 0) {
-          set((state) => ({
-            history: [logged, ...state.history],
-            activeWorkout: null,
-          }));
-        } else {
+        if (loggedLocal.exercises.length === 0) {
           set({ activeWorkout: null });
+          return;
+        }
+
+        // Optimistic UI update
+        set((state) => ({
+          history: [loggedLocal, ...state.history],
+          activeWorkout: null,
+        }));
+
+        if (!token) return;
+
+        try {
+          await fetch(`${API_URL}/history`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              title: loggedLocal.title,
+              date: loggedLocal.date,
+              durationSeconds: loggedLocal.durationSeconds,
+              exercises: loggedLocal.exercises,
+            }),
+          });
+          get().syncData();
+        } catch (e) {
+          console.warn('Offline: logged workout locally only.');
         }
       },
 

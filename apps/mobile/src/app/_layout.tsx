@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { ThemeProvider, DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultTheme } from 'expo-router/react-navigation';
 import { useAuthStore } from '@/store/auth.store';
+import { useWorkoutStore } from '@/store/workout.store';
 import { useSettingsStore } from '@/store/settings.store';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -11,6 +12,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const { user } = useAuthStore();
   const { theme } = useSettingsStore();
+  const { syncData } = useWorkoutStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -33,6 +35,11 @@ export default function RootLayout() {
       router.replace('/(app)');
     }
   }, [user, segments]);
+
+  useEffect(() => {
+    // Sync data (exercises, routines, history) from backend API
+    syncData();
+  }, [user]);
 
   const navTheme = theme === 'dark' ? NavigationDarkTheme : NavigationDefaultTheme;
 

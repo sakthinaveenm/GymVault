@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useWorkoutStore, EXERCISE_DATABASE, Exercise } from '@/store/workout.store';
+import { useWorkoutStore, Exercise } from '@/store/workout.store';
 import { useSettingsStore } from '@/store/settings.store';
 import { useTheme } from '@/hooks/use-theme';
 import { Button } from '@/components/ui/Button';
@@ -23,6 +23,7 @@ import { TextInput } from '@/components/ui/TextInput';
 export default function ActiveWorkoutScreen() {
   const {
     activeWorkout,
+    exercises,
     updateActiveTimer,
     addExerciseToActiveWorkout,
     removeExerciseFromActiveWorkout,
@@ -117,7 +118,7 @@ export default function ActiveWorkoutScreen() {
     setSearchQuery('');
   };
 
-  const filteredExercises = EXERCISE_DATABASE.filter((ex) => {
+  const filteredExercises = exercises.filter((ex: Exercise) => {
     const matchesSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase());
     const alreadyAdded = activeWorkout.exercises.some((e) => e.exerciseId === ex.id);
     return matchesSearch && !alreadyAdded;
@@ -310,7 +311,7 @@ export default function ActiveWorkoutScreen() {
           </View>
 
           <ScrollView style={styles.modalList}>
-            {filteredExercises.map((ex) => (
+            {filteredExercises.map((ex: Exercise) => (
               <Pressable
                 key={ex.id}
                 onPress={() => handleAddExercise(ex)}
