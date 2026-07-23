@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
@@ -63,6 +63,39 @@ export class AuthService {
         user: { email: user.email, name: user.name },
         token,
       },
+    };
+  }
+
+  async toggleFavorite(userId: string, exerciseId: string) {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const idx = user.favoriteExerciseIds.indexOf(exerciseId);
+    if (idx > -1) {
+      user.favoriteExerciseIds.splice(idx, 1);
+    } else {
+      user.favoriteExerciseIds.push(exerciseId);
+    }
+
+    await user.save();
+    return {
+      success: true,
+      message: 'Favorites updated successfully',
+      data: user.favoriteExerciseIds,
+    };
+  }
+
+  async getFavorites(userId: string) {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return {
+      success: true,
+      message: 'Favorites retrieved successfully',
+      data: user.favoriteExerciseIds || [],
     };
   }
 

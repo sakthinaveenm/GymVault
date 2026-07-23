@@ -63,9 +63,17 @@ interface WorkoutState {
   history: LoggedWorkout[];
   activeWorkout: ActiveWorkout | null;
   exercises: Exercise[];
+  favoriteExerciseIds: string[];
   
   // Sync
   syncData: () => Promise<void>;
+
+  // Favorites
+  toggleFavoriteExercise: (id: string) => Promise<void>;
+
+  // Duplication
+  duplicateRoutine: (id: string) => Promise<void>;
+  duplicateLoggedWorkout: (id: string) => Promise<void>;
 
   // Routine actions
   createRoutine: (title: string, exercises: WorkoutExercise[]) => Promise<void>;
@@ -90,6 +98,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       history: [],
       activeWorkout: null,
       exercises: OFFLINE_EXERCISES,
+      favoriteExerciseIds: [],
 
       syncData: async () => {
         const token = useAuthStore.getState().token;
@@ -108,6 +117,15 @@ export const useWorkoutStore = create<WorkoutState>()(
         if (!token) return;
 
         try {
+          // Fetch Favorites
+          const fRes = await fetch(`${API_URL}/auth/favorites`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const fJson = await fRes.json();
+          if (fJson.success) {
+            set({ favoriteExerciseIds: fJson.data });
+          }
+
           // Fetch Routines
           const rRes = await fetch(`${API_URL}/routines`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -376,6 +394,49 @@ export const useWorkoutStore = create<WorkoutState>()(
         } catch (e) {
           console.warn('Offline: logged workout locally only.');
         }
+      },
+
+      toggleFavoriteExercise: async (id) => {
+        const token = useAuthStore.getState().token;
+        set((state) => {
+          const idx = state.favoriteExerciseIds.indexOf(id);
+          const list = [...state.favoriteExerciseIds];
+          if (idx > -1) {
+            list.splice(idx, 1);
+          } else {
+            list.push(id);
+          }
+          return { favoriteExerciseIds: list };
+        });
+
+        if (!token) return;
+
+        try {
+          await fetch(`${API_URL}/auth/favorites/${id}`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } catch (e) {
+          console.warn('Offline: toggled favorite locally only.');
+        }
+      },
+
+      duplicateRoutine: async (id) => {
+        const routine = get().routines.find((r) => r.id === id);
+        if (!routine) return;
+        await get().createRoutine(`${routine.title} (Copy)`, routine.exercises);
+      },
+
+      duplicateLoggedWorkout: async (id) => {
+        const workout = get().history.find((w) => w.id === id);
+        if (!workout) return;
+        await get().createRoutine(
+          `${workout.title} Template`,
+          workout.exercises.map((e) => ({
+            ...e,
+            sets: e.sets.map((s) => ({ ...s, isCompleted: false })),
+          }))
+        );
       },
 
       cancelActiveWorkout: () => {

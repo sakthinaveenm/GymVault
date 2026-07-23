@@ -14,11 +14,11 @@ import { useTheme } from '@/hooks/use-theme';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Spacing } from '@/constants/theme';
-import { Dumbbell, Plus, Play, Trash2 } from 'lucide-react-native';
+import { Dumbbell, Plus, Play, Trash2, Copy } from 'lucide-react-native';
 
 export default function WorkoutDashboard() {
   const { user } = useAuthStore();
-  const { routines, activeWorkout, startWorkout, deleteRoutine } = useWorkoutStore();
+  const { routines, activeWorkout, startWorkout, deleteRoutine, duplicateRoutine } = useWorkoutStore();
   const theme = useTheme();
   const router = useRouter();
 
@@ -118,6 +118,16 @@ export default function WorkoutDashboard() {
                     ]}
                   >
                     <Play size={18} color={theme.primary} fill={theme.primary} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => duplicateRoutine(routine.id)}
+                    style={({ pressed }) => [
+                      styles.actionIcon,
+                      { backgroundColor: theme.backgroundSelected },
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Copy size={16} color={theme.text} />
                   </Pressable>
                   <Pressable
                     onPress={() => confirmDeleteRoutine(routine.id, routine.title)}

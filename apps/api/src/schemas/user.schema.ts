@@ -11,6 +11,9 @@ export class User extends Document {
 
   @Prop({ required: true })
   passwordHash: string;
+
+  @Prop({ type: [String], default: [] })
+  favoriteExerciseIds: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
