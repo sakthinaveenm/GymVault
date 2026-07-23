@@ -42,6 +42,13 @@ export default function RootLayout() {
     // Sync analytics (weights, measurements, PRs)
     const { syncAnalytics } = require('@/store/analytics.store').useAnalyticsStore.getState();
     syncAnalytics();
+    // Sync nutrition logs & goals
+    try {
+      const { syncNutrition } = require('@/store/nutrition.store').useNutritionStore.getState();
+      syncNutrition();
+    } catch (e) {
+      console.warn('Failed to require nutrition store for sync.');
+    }
   }, [user]);
 
   const navTheme = theme === 'dark' ? NavigationDarkTheme : NavigationDefaultTheme;

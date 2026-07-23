@@ -14,6 +14,22 @@ export class User extends Document {
 
   @Prop({ type: [String], default: [] })
   favoriteExerciseIds: string[];
+
+  @Prop({
+    type: {
+      calories: { type: Number, default: 2000 },
+      protein: { type: Number, default: 150 },
+      carbs: { type: Number, default: 200 },
+      fat: { type: Number, default: 70 },
+    },
+    default: () => ({ calories: 2000, protein: 150, carbs: 200, fat: 70 }),
+  })
+  nutritionGoals: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

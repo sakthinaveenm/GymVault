@@ -8,6 +8,7 @@ import { RoutinesModule } from './routines/routines.module';
 import { HistoryModule } from './history/history.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { CoachModule } from './coach/coach.module';
+import { NutritionModule } from './nutrition/nutrition.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { CoachModule } from './coach/coach.module';
     HistoryModule,
     AnalyticsModule,
     CoachModule,
+    NutritionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

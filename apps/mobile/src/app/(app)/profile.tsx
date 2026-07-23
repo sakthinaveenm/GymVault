@@ -13,6 +13,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useWorkoutStore } from '@/store/workout.store';
 import { useSettingsStore } from '@/store/settings.store';
 import { useAnalyticsStore } from '@/store/analytics.store';
+import { useNutritionStore } from '@/store/nutrition.store';
 import { useTheme } from '@/hooks/use-theme';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -24,6 +25,7 @@ export default function ProfileScreen() {
   const { user, token, logout } = useAuthStore();
   const { history, routines, restoreWorkoutsBackup } = useWorkoutStore();
   const { weights, measurements, restoreAnalyticsBackup } = useAnalyticsStore();
+  const { logs: nutritionLogs, goals: nutritionGoals, restoreNutritionBackup } = useNutritionStore();
   const { theme, setTheme, unitSystem, toggleUnitSystem } = useSettingsStore();
   const currentThemeColors = useTheme();
 
@@ -101,6 +103,8 @@ export default function ProfileScreen() {
       history,
       weights,
       measurements,
+      nutritionLogs,
+      nutritionGoals,
     };
 
     Clipboard.setString(JSON.stringify(backupObj));
@@ -114,6 +118,9 @@ export default function ProfileScreen() {
         restoreWorkoutsBackup(parsed.routines, parsed.history);
         if (parsed.weights || parsed.measurements) {
           restoreAnalyticsBackup(parsed.weights || [], parsed.measurements || []);
+        }
+        if (parsed.nutritionLogs) {
+          restoreNutritionBackup(parsed.nutritionLogs, parsed.nutritionGoals || { calories: 2000, protein: 150, carbs: 200, fat: 70 });
         }
         setRestoreModalVisible(false);
         setRestoreInput('');
