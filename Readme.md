@@ -497,29 +497,22 @@ Design this module for future expansion.
 
 ---
 
-## Version 0.3
+## Version 0.3 (Completed)
 
-Workout Templates
-
-Exercise Search
-
-Favorites
-
-Workout Duplication
-
-Calendar
+- [x] Workout Templates (Routine copy/load template systems)
+- [x] Exercise Search (Optimized local filtering database searches)
+- [x] Favorites (Favoriting/unfavoriting exercise lists with backend syncing)
+- [x] Workout Duplication (Save past logged workouts and routines as templates)
+- [x] Calendar (Grid tracker highlight completions and filter logs by date)
 
 ---
 
-## Version 0.4
+## Version 0.4 (Completed)
 
-Cloud Sync
-
-Notifications
-
-Backup
-
-Export
+- [x] Cloud Sync (Live synchronization visual state badges)
+- [x] Notifications (In-app rest timers with platform device vibration alarm triggers)
+- [x] Backup (JSON full database backup exports and imports restoration)
+- [x] Export (CSV workout logs compiler and clipboard export share formatting)
 
 ---
 

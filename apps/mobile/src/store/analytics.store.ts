@@ -43,6 +43,7 @@ interface AnalyticsState {
     arms: number,
     thighs: number
   ) => Promise<void>;
+  restoreAnalyticsBackup: (weights: WeightEntry[], measurements: MeasurementEntry[]) => void;
 }
 
 export const useAnalyticsStore = create<AnalyticsState>()(
@@ -151,6 +152,10 @@ export const useAnalyticsStore = create<AnalyticsState>()(
         } catch (e) {
           console.warn('Offline: Logged measurements locally only.');
         }
+      },
+
+      restoreAnalyticsBackup: (weights, measurements) => {
+        set({ weights, measurements });
       },
     }),
     {

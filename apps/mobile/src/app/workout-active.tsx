@@ -19,6 +19,7 @@ import { Card } from '@/components/ui/Card';
 import { Spacing } from '@/constants/theme';
 import { Clock, Plus, Trash2, Check, X, Search } from 'lucide-react-native';
 import { TextInput } from '@/components/ui/TextInput';
+import { RestTimer } from '@/components/RestTimer';
 
 export default function ActiveWorkoutScreen() {
   const {
@@ -40,6 +41,15 @@ export default function ActiveWorkoutScreen() {
 
   const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [restTimerVisible, setRestTimerVisible] = useState(false);
+
+  const handleToggleComplete = (exerciseId: string, setId: string, currentlyCompleted: boolean) => {
+    const nextCompleted = !currentlyCompleted;
+    updateActiveSet(exerciseId, setId, { isCompleted: nextCompleted });
+    if (nextCompleted) {
+      setRestTimerVisible(true);
+    }
+  };
 
   // Active workout timer tick
   useEffect(() => {
@@ -236,7 +246,7 @@ export default function ActiveWorkoutScreen() {
                     <View style={styles.setRowActions}>
                       <Pressable
                         onPress={() =>
-                          updateActiveSet(ex.exerciseId, set.id, { isCompleted: !set.isCompleted })
+                          handleToggleComplete(ex.exerciseId, set.id, set.isCompleted)
                         }
                         style={[
                           styles.checkBtn,
@@ -333,6 +343,8 @@ export default function ActiveWorkoutScreen() {
           </ScrollView>
         </View>
       </Modal>
+
+      <RestTimer isVisible={restTimerVisible} onClose={() => setRestTimerVisible(false)} />
     </View>
   );
 }

@@ -89,6 +89,7 @@ interface WorkoutState {
   updateActiveSet: (exerciseId: string, setId: string, fields: Partial<WorkoutSet>) => void;
   completeWorkout: () => Promise<void>;
   cancelActiveWorkout: () => void;
+  restoreWorkoutsBackup: (routines: Routine[], history: LoggedWorkout[]) => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -441,6 +442,10 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       cancelActiveWorkout: () => {
         set({ activeWorkout: null });
+      },
+
+      restoreWorkoutsBackup: (routines, history) => {
+        set({ routines, history });
       },
     }),
     {
