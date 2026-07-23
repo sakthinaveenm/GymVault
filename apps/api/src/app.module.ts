@@ -7,6 +7,7 @@ import { ExercisesModule } from './exercises/exercises.module';
 import { RoutinesModule } from './routines/routines.module';
 import { HistoryModule } from './history/history.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { CoachModule } from './coach/coach.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     RoutinesModule,
     HistoryModule,
     AnalyticsModule,
+    CoachModule,
   ],
   controllers: [AppController],
   providers: [AppService],
