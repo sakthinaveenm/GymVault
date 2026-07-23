@@ -39,6 +39,9 @@ export default function RootLayout() {
   useEffect(() => {
     // Sync data (exercises, routines, history) from backend API
     syncData();
+    // Sync analytics (weights, measurements, PRs)
+    const { syncAnalytics } = require('@/store/analytics.store').useAnalyticsStore.getState();
+    syncAnalytics();
   }, [user]);
 
   const navTheme = theme === 'dark' ? NavigationDarkTheme : NavigationDefaultTheme;

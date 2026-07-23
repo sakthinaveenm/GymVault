@@ -475,35 +475,25 @@ Design this module for future expansion.
 
 # Features
 
-## Version 0.1
+## Version 0.1 (Completed)
 
-Authentication
-
-Exercise Database
-
-Workout Builder
-
-Workout Tracking
-
-History
-
-Profile
-
-Dark Theme
+- [x] Authentication (NestJS JWT & Zustand session persist)
+- [x] Exercise Database (Automated MongoDB seeding & searchable queries)
+- [x] Workout Builder
+- [x] Workout Tracking
+- [x] History (Workout logger syncing)
+- [x] Profile (Streaks & appearance toggle)
+- [x] Dark Theme
 
 ---
 
-## Version 0.2
+## Version 0.2 (Completed)
 
-Personal Records
-
-Body Weight
-
-Measurements
-
-Charts
-
-Statistics
+- [x] Personal Records (Dynamically calculated dynamically based on logged sets)
+- [x] Body Weight (Mongoose logs & weight entries list)
+- [x] Measurements (Arms, chest, waist, thighs trackers)
+- [x] Charts (Interactive SVG Line Charts mapping trends)
+- [x] Statistics (Streak logs & day trackers)
 
 ---
 
